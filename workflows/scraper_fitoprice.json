@@ -1,0 +1,896 @@
+{
+    "name": "My workflow",
+    "nodes": [{
+            "parameters": {
+                "url": "={{ $json.url }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                16,
+                416
+            ],
+            "id": "85dea6c9-4603-43fb-94f5-842f87c7f2e7",
+            "name": "HTTP Request2"
+        },
+        {
+            "parameters": {
+                "operation": "extractHtmlContent",
+                "extractionValues": {
+                    "values": [{
+                            "key": "name",
+                            "cssSelector": "={{ $('Merge1').item.json.selector_title }}",
+                            "returnValue": "html",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "price",
+                            "cssSelector": "={{ $('Merge1').item.json.selector_price }}",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "link",
+                            "cssSelector": "={{ $('Merge1').item.json.selector_link }}",
+                            "returnValue": "=attribute",
+                            "attribute": "href",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "img",
+                            "cssSelector": "={{ $('Merge1').item.json.selector_image }}",
+                            "returnValue": "attribute",
+                            "attribute": "src",
+                            "returnArray": true
+                        }
+                    ]
+                },
+                "options": {
+                    "trimValues": false,
+                    "cleanUpText": false
+                }
+            },
+            "type": "n8n-nodes-base.html",
+            "typeVersion": 1.2,
+            "position": [
+                400,
+                416
+            ],
+            "id": "dcb8baaf-e32a-4aac-a7e4-849f02063011",
+            "name": "HTML1",
+            "notesInFlow": false
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "company_urls",
+                "filterType": "string",
+                "filterString": "company_id=eq.3"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [-384,
+                304
+            ],
+            "id": "9b7ca370-8867-47ec-b07f-f80cef4b7e9f",
+            "name": "Get many rows2",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "scraping_config",
+                "filterType": "string",
+                "filterString": "company_url_id=in.(6,7,8,9,10,11)"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [-384,
+                528
+            ],
+            "id": "2d8bf9da-6e1e-4df5-b7ae-661c3a8d8951",
+            "name": "Get many rows3",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [{
+                        "field1": "id",
+                        "field2": "company_url_id"
+                    }]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [-144,
+                416
+            ],
+            "id": "d40de5ab-8c96-4b98-a892-96bba30d60e2",
+            "name": "Merge1"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [{
+                            "id": "b9542655-ad83-4712-b1e7-daeafd6fb289",
+                            "name": "company_id",
+                            "value": "={{ $('Merge1').item.json.company_id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "953a1906-de92-479b-9fe2-0876d48fd9c7",
+                            "name": "name",
+                            "value": "={{ $json.name }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "453e54d3-7044-4a39-96f8-c76ff8e11d9a",
+                            "name": "price",
+                            "value": "={{ $json.price }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "d34e9042-5c3b-4736-a7a1-9c0f8e0b6e9c",
+                            "name": "link",
+                            "value": "={{ $json.link }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "4cb1e317-a1cf-4db4-b2e3-b518ee418dcf",
+                            "name": "img",
+                            "value": "={{ $json.img }}",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                560,
+                416
+            ],
+            "id": "2073c586-c90d-407d-a066-86e128c04547",
+            "name": "Edit Fields"
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.url }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                576,
+                1184
+            ],
+            "id": "4322c831-a53f-48a7-b1ad-a8bb8459bd73",
+            "name": "HTTP Request"
+        },
+        {
+            "parameters": {
+                "operation": "extractHtmlContent",
+                "extractionValues": {
+                    "values": [{
+                            "key": "name",
+                            "cssSelector": "={{ $('Merge').item.json.selector_title }}",
+                            "returnValue": "html",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "price",
+                            "cssSelector": "={{ $('Merge').item.json.selector_price }}",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "link",
+                            "cssSelector": "={{ $('Merge').item.json.selector_link }}",
+                            "returnValue": "=attribute",
+                            "attribute": "href",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "img",
+                            "cssSelector": "={{ $('Merge').item.json.selector_image }}",
+                            "returnValue": "html",
+                            "returnArray": true
+                        }
+                    ]
+                },
+                "options": {
+                    "trimValues": false,
+                    "cleanUpText": false
+                }
+            },
+            "type": "n8n-nodes-base.html",
+            "typeVersion": 1.2,
+            "position": [
+                944,
+                1184
+            ],
+            "id": "e9d1ec8a-05c4-4746-8c5c-d14fd48a596d",
+            "name": "HTML",
+            "notesInFlow": false
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "company_urls",
+                "filterType": "string"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                160,
+                1088
+            ],
+            "id": "305770c7-9200-4336-8adb-5a649938c325",
+            "name": "Get many rows",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "scraping_config",
+                "filterType": "none"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                160,
+                1280
+            ],
+            "id": "5969b19f-55ba-40be-aea8-9f84106101bf",
+            "name": "Get many rows4",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [{
+                        "field1": "id",
+                        "field2": "company_url_id"
+                    }]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                384,
+                1184
+            ],
+            "id": "f73a48f2-354f-4adf-aa65-19e50e29472f",
+            "name": "Merge"
+        },
+        {
+            "parameters": {
+                "content": "https://fertiecoagro.es/",
+                "height": 480,
+                "width": 1408
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [-592,
+                256
+            ],
+            "id": "fe638f29-baee-46a4-87c7-b6cd2d106e9d",
+            "name": "Sticky Note"
+        },
+        {
+            "parameters": {
+                "content": "https://www.agricoal.es/",
+                "height": 480,
+                "width": 1712
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                848,
+                256
+            ],
+            "id": "0d5ef04d-e064-4366-a281-81468362f438",
+            "name": "Sticky Note1"
+        },
+        {
+            "parameters": {
+                "url": "=https://www.agricoal.es/3-fitosanitarios",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1520,
+                464
+            ],
+            "id": "8b263919-55fd-453d-89fc-b490233766ac",
+            "name": "HTTP Request3"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "company_urls",
+                "filterType": "string",
+                "filterString": "company_id=eq.1"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                1088,
+                352
+            ],
+            "id": "d791a9a0-3b63-458b-aea6-4d3ea7d31c25",
+            "name": "Get many rows5",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "tableId": "scraping_config",
+                "filterType": "string",
+                "filterString": "company_url_id=in.(12,13,15,16,17,18,19,20)"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                1088,
+                576
+            ],
+            "id": "c387c07d-24be-47e6-bdb7-16881b90fd64",
+            "name": "Get many rows6",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "IrHtqomw8uS9P6Wj",
+                    "name": "Supabase account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [{
+                        "field1": "id",
+                        "field2": "company_url_id"
+                    }]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                1328,
+                464
+            ],
+            "id": "e6222950-599a-43a8-93d5-4bae78f0ba9c",
+            "name": "Merge2"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [{
+                            "id": "b9542655-ad83-4712-b1e7-daeafd6fb289",
+                            "name": "company_id",
+                            "value": "={{ $('Merge2').item.json.company_id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "953a1906-de92-479b-9fe2-0876d48fd9c7",
+                            "name": "name",
+                            "value": "={{ $json.name }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "453e54d3-7044-4a39-96f8-c76ff8e11d9a",
+                            "name": "price",
+                            "value": "={{ $json.price }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "d34e9042-5c3b-4736-a7a1-9c0f8e0b6e9c",
+                            "name": "link",
+                            "value": "={{ $json.link }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "4cb1e317-a1cf-4db4-b2e3-b518ee418dcf",
+                            "name": "img",
+                            "value": "={{ $json.img }}",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                2256,
+                464
+            ],
+            "id": "8467653c-fe7a-4f3d-ba81-77c59781b538",
+            "name": "Edit Fields2"
+        },
+        {
+            "parameters": {
+                "operation": "extractHtmlContent",
+                "extractionValues": {
+                    "values": [{
+                            "key": "name",
+                            "cssSelector": "={{ $('Merge2').item.json.selector_title }}",
+                            "returnValue": "html",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "price",
+                            "cssSelector": "={{ $('Merge2').item.json.selector_price }}",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "link",
+                            "cssSelector": "={{ $('Merge2').item.json.selector_link }}",
+                            "returnValue": "=attribute",
+                            "attribute": "href",
+                            "returnArray": true
+                        },
+                        {
+                            "key": "img",
+                            "cssSelector": "=.thumbnail",
+                            "returnValue": "html",
+                            "returnArray": true
+                        }
+                    ]
+                },
+                "options": {
+                    "trimValues": false,
+                    "cleanUpText": false
+                }
+            },
+            "type": "n8n-nodes-base.html",
+            "typeVersion": 1.2,
+            "position": [
+                1872,
+                464
+            ],
+            "id": "b5041f78-cd1d-44d6-9e98-064ecccb49b5",
+            "name": "HTML2",
+            "notesInFlow": false
+        },
+        {
+            "parameters": {
+                "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  // 🔹 Caso 1: viene un HTML dentro del campo \"data\" (por ejemplo FertiecoAgro)\n  if (typeof data.data === 'string' && data.data.trim().startsWith('<')) {\n    return { json: { data: data.data } };\n  }\n\n  // 🔹 Caso 2: viene HTML dentro de \"rendered_products\" (por ejemplo Agricoal)\n  if (data.rendered_products) {\n    return { json: { data: data.rendered_products } };\n  }\n\n  // 🔹 Caso 3: el body ya es HTML plano\n  if (typeof data === 'string' && data.trim().startsWith('<')) {\n    return { json: { data: data } };\n  }\n\n  // 🔹 Caso 4: dentro de \"body\" o similar\n  if (data.body && data.body.trim().startsWith('<')) {\n    return { json: { data: data.body } };\n  }\n\n  // 🔹 Si no se encontró HTML, devolvemos vacío (para no romper el flujo)\n  return { json: { data: '' } };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                768,
+                1184
+            ],
+            "id": "2d47194c-99ea-4688-8830-2011590ebfc9",
+            "name": "Code in JavaScript1"
+        },
+        {
+            "parameters": {
+                "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  // 🔹 Caso 1: viene un HTML dentro del campo \"data\" (por ejemplo FertiecoAgro)\n  if (typeof data.data === 'string' && data.data.trim().startsWith('<')) {\n    return { json: { data: data.data } };\n  }\n\n  // 🔹 Caso 2: viene HTML dentro de \"rendered_products\" (por ejemplo Agricoal)\n  if (data.rendered_products) {\n    return { json: { data: data.rendered_products } };\n  }\n\n  // 🔹 Caso 3: el body ya es HTML plano\n  if (typeof data === 'string' && data.trim().startsWith('<')) {\n    return { json: { data: data } };\n  }\n\n  // 🔹 Caso 4: dentro de \"body\" o similar\n  if (data.body && data.body.trim().startsWith('<')) {\n    return { json: { data: data.body } };\n  }\n\n  // 🔹 Si no se encontró HTML, devolvemos vacío (para no romper el flujo)\n  return { json: { data: '' } };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                208,
+                416
+            ],
+            "id": "8712b9f2-193c-440f-aad1-9d0a8981f3ba",
+            "name": "Code in JavaScript2"
+        },
+        {
+            "parameters": {
+                "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  // 🔹 Caso 1: viene un HTML dentro del campo \"data\" (por ejemplo FertiecoAgro)\n  if (typeof data.data === 'string' && data.data.trim().startsWith('<')) {\n    return { json: { data: data.data } };\n  }\n\n  // 🔹 Caso 2: viene HTML dentro de \"rendered_products\" (por ejemplo Agricoal)\n  if (data.rendered_products) {\n    return { json: { data: data.rendered_products } };\n  }\n\n  // 🔹 Caso 3: el body ya es HTML plano\n  if (typeof data === 'string' && data.trim().startsWith('<')) {\n    return { json: { data: data } };\n  }\n\n  // 🔹 Caso 4: dentro de \"body\" o similar\n  if (data.body && data.body.trim().startsWith('<')) {\n    return { json: { data: data.body } };\n  }\n\n  // 🔹 Si no se encontró HTML, devolvemos vacío (para no romper el flujo)\n  return { json: { data: '' } };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1696,
+                464
+            ],
+            "id": "d54ac97b-0671-4911-9cf3-4b9cddf0276e",
+            "name": "Code in JavaScript"
+        },
+        {
+            "parameters": {
+                "content": "General",
+                "height": 480,
+                "width": 2160
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [-176,
+                1024
+            ],
+            "id": "a20c1f49-2c7d-4f78-88fa-e70dc166a5a2",
+            "name": "Sticky Note2"
+        },
+        {
+            "parameters": {
+                "jsCode": "return items.map(item => {\n  const imgs = item.json.img || [];\n\n  const cleanImgs = imgs.map(value => {\n    // Caso 1: el extractor ya devolvió solo la URL\n    if (typeof value === 'string' && value.startsWith('http')) {\n      return value.trim();\n    }\n\n    // Caso 2: el extractor devolvió HTML con <img src=\"...\">\n    const match = value.match(/<img[^>]*src=[\"']([^\"']+)[\"']/i);\n    if (match) {\n      return match[1];\n    }\n\n    // Caso 3: el extractor no encontró nada, devolvemos vacío o el HTML crudo\n    return value || '';\n  });\n\n  return {\n    json: {\n      ...item.json,\n      img: cleanImgs\n    }\n  };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2064,
+                464
+            ],
+            "id": "7476014d-ff2e-4809-88e0-6ea3f63a58cc",
+            "name": "Code in JavaScript3"
+        },
+        {
+            "parameters": {
+                "jsCode": "return items.map(item => {\n    // --- Limpieza de 'img' (URLs) ---\n    const imgs = Array.isArray(item.json.img) ? item.json.img : [];\n    const cleanImgs = imgs.map(value => {\n        const strValue = String(value);\n        if (strValue.startsWith('http')) {\n            return strValue.trim();\n        }\n        const match = strValue.match(/<img[^>]*src=[\"']([^\"']+)[\"']/i);\n        if (match) {\n            return match[1];\n        }\n        return '';\n    });\n\n    // --- Limpieza de 'name' (Extraer texto de <a>) ---\n    const names = Array.isArray(item.json.name) ? item.json.name : (item.json.name ? [item.json.name] : []);\n    const cleanNames = names.map(value => {\n        const strValue = String(value);\n        const nameMatch = strValue.match(/<a[^>]*>(.*?)<\\/a>/i);\n        if (nameMatch && nameMatch[1]) {\n            return nameMatch[1].trim();\n        } else {\n            return strValue.trim();\n        }\n    });\n\n    // --- NUEVA LIMPIEZA DE 'price' (Convertir a INT en céntimos) ---\n    // Asume 'price' es un array de cadenas (p. ej., [\"12,50 €\", \"99,99 €\"])\n    const prices = Array.isArray(item.json.price) ? item.json.price : (item.json.price ? [item.json.price] : []);\n\n    const cleanPrices = prices.map(priceValue => {\n        if (!priceValue) return 0; // Si el precio está vacío, devuelve 0\n\n        let strPrice = String(priceValue);\n        \n        // 1. Eliminar el símbolo € y cualquier texto no numérico al final\n        strPrice = strPrice.replace(/€\\s*$/, '').trim();\n        \n        // 2. Reemplazar el separador de miles (si es un punto) y el separador decimal (si es una coma)\n        // Ejemplo: \"1.250,50\" -> \"1250.50\"\n        strPrice = strPrice\n            .replace(/\\./g, '')  // Eliminar puntos (separadores de miles)\n            .replace(',', '.');  // Reemplazar coma por punto (separador decimal estándar JS)\n\n        // 3. Convertir a número flotante\n        const numPrice = parseFloat(strPrice);\n\n        if (isNaN(numPrice)) return 0; // Si la conversión falla, devuelve 0\n\n        // 4. Convertir a CÉNTIMOS (INT)\n        // Multiplicar por 100 y redondear (para evitar problemas de coma flotante)\n        return Math.round(numPrice * 100); \n    });\n\n    // --- Retorno del Ítem Limpio ---\n    // Devolvemos el array de precios limpios (en céntimos)\n    return {\n        json: {\n            ...item.json,\n            img: cleanImgs,\n            name: cleanNames,\n            price: cleanPrices // ¡Precio listo como array de enteros (céntimos)!\n        }\n    };\n});"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1120,
+                1184
+            ],
+            "id": "12530670-bb8d-4dd7-8416-3a27bda2e887",
+            "name": "Code in JavaScript4"
+        },
+        {
+            "parameters": {},
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [-48,
+                1184
+            ],
+            "id": "1501642d-bb2d-4434-aec7-c0f87d27cd75",
+            "name": "When clicking ‘Execute workflow’"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [{
+                            "id": "73beeb26-ea7b-4904-8197-796ef66ad037",
+                            "name": "company_id",
+                            "value": "={{ $('Merge').item.json.company_id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "b99e429a-2667-4451-afe8-fa7317425b38",
+                            "name": "company_url_id",
+                            "value": "={{ $('Merge').item.json.company_url_id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "17787c92-b060-49d3-be78-3f8ea384ed90",
+                            "name": "name",
+                            "value": "={{ $json.name }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "f8ac29bd-65c2-4d4b-968d-f5b7b8932002",
+                            "name": "price",
+                            "value": "={{ $json.price }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "81d915a5-cf75-42ff-90cd-4b5120b6a32b",
+                            "name": "link",
+                            "value": "={{ $json.link }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "1466a6a0-855b-4b38-a1fa-0b07a933ba29",
+                            "name": "img",
+                            "value": "={{ $json.img }}",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                1328,
+                1184
+            ],
+            "id": "285d585c-82b2-40e9-9f8e-01545d516cab",
+            "name": "Edit Fields1"
+        },
+        {
+            "parameters": {
+                "jsCode": "// 1. Obtiene todos los ítems de entrada (que n8n presenta como un array de objetos con la clave 'json')\nconst inputItems = $input.all();\n\n// 2. Extrae solo los objetos JSON de cada ítem de entrada\n// Esto resulta en un array limpio de objetos [{}, {}]\nconst dataArray = inputItems.map(item => item.json);\n\n// 3. Crea el nuevo objeto con la estructura que la API espera: {\"data\": [...]}\nconst finalPayload = {\n  data: dataArray\n};\n\n// 4. DEVUELVE el resultado en el formato que n8n espera:\n// Un array de ítems, donde cada ítem tiene una clave 'json' que es un objeto.\n// Esto evita el error \"A 'json' property isn't an object\".\nreturn [{ json: finalPayload }];"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1536,
+                1184
+            ],
+            "id": "54f725f8-53b8-47cd-9f00-ce55a2b1125b",
+            "name": "Code in JavaScript5"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://fitoprice-backend-git-develop-josemayenp-9759s-projects.vercel.app//products/import",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [{
+                        "name": "data",
+                        "value": "={{ $json.data }}"
+                    }]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1744,
+                1184
+            ],
+            "id": "a4d193eb-0dc5-4058-93f2-dd5ee6110ba9",
+            "name": "HTTP Request1"
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "HTTP Request2": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript2",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Merge1": {
+            "main": [
+                [{
+                    "node": "HTTP Request2",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows2": {
+            "main": [
+                [{
+                    "node": "Merge1",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows3": {
+            "main": [
+                [{
+                    "node": "Merge1",
+                    "type": "main",
+                    "index": 1
+                }]
+            ]
+        },
+        "HTML1": {
+            "main": [
+                [{
+                    "node": "Edit Fields",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "HTTP Request": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript1",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "HTML": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript4",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows": {
+            "main": [
+                [{
+                    "node": "Merge",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows4": {
+            "main": [
+                [{
+                    "node": "Merge",
+                    "type": "main",
+                    "index": 1
+                }]
+            ]
+        },
+        "Merge": {
+            "main": [
+                [{
+                    "node": "HTTP Request",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "HTTP Request3": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows5": {
+            "main": [
+                [{
+                    "node": "Merge2",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Get many rows6": {
+            "main": [
+                [{
+                    "node": "Merge2",
+                    "type": "main",
+                    "index": 1
+                }]
+            ]
+        },
+        "Merge2": {
+            "main": [
+                [{
+                    "node": "HTTP Request3",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "HTML2": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript3",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript1": {
+            "main": [
+                [{
+                    "node": "HTML",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript2": {
+            "main": [
+                [{
+                    "node": "HTML1",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript": {
+            "main": [
+                [{
+                    "node": "HTML2",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript3": {
+            "main": [
+                [{
+                    "node": "Edit Fields2",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript4": {
+            "main": [
+                [{
+                    "node": "Edit Fields1",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "When clicking ‘Execute workflow’": {
+            "main": [
+                [{
+                        "node": "Get many rows",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Get many rows4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Edit Fields1": {
+            "main": [
+                [{
+                    "node": "Code in JavaScript5",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        },
+        "Code in JavaScript5": {
+            "main": [
+                [{
+                    "node": "HTTP Request1",
+                    "type": "main",
+                    "index": 0
+                }]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "fe6433a3-8097-4910-9719-c4e8329775ec",
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "35d5d5ca4ffc2ad0538fa2394d60724b39a56209980d5510d998f1835dc8f128"
+    },
+    "id": "sXRiWLjghLmTgCig",
+    "tags": []
+}
