@@ -1,0 +1,57 @@
+# Ejecuta los workflows de n8n contra la API desplegada (Vercel), sin servidor de n8n:
+# cada ejecución construye la imagen del Dockerfile, corre un workflow y se apaga.
+#
+# Secretos del repositorio (Settings > Secrets and variables > Actions):
+#   FITOPRICE_API_URL  URL de la API en Vercel, sin barra final
+#   FITOPRICE_API_KEY  el SCRAPER_API_KEY de la API
+#
+# Las horas de cron van en UTC: 5:00 UTC son las 6:00 en invierno y las 7:00 en verano en Madrid.
+# GitHub solo lanza los horarios desde la rama por defecto (main) y puede retrasarlos unos minutos.
+name: n8n
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # precios, todos los días
+    - cron: "0 5 * * 6"   # registro oficial, los sábados (el Ministerio lo actualiza el viernes)
+  workflow_dispatch:
+    inputs:
+      workflow:
+        description: Workflow que ejecutar
+        type: choice
+        options: [FitoPriceScraper, FitoPriceRegOfic]
+        default: FitoPriceScraper
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Elegir workflow
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "id=${{ inputs.workflow }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 5 * * 6" ]; then
+            echo "id=FitoPriceRegOfic" >> "$GITHUB_OUTPUT"
+          else
+            echo "id=FitoPriceScraper" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Construir la imagen de n8n
+        run: docker build -t fitoprice-n8n .
+
+      - name: Ejecutar ${{ steps.pick.outputs.id }}
+        env:
+          FITOPRICE_API_URL: ${{ secrets.FITOPRICE_API_URL }}
+          FITOPRICE_API_KEY: ${{ secrets.FITOPRICE_API_KEY }}
+        run: |
+          if [ -z "$FITOPRICE_API_URL" ] || [ -z "$FITOPRICE_API_KEY" ]; then
+            echo "::error::Faltan los secretos FITOPRICE_API_URL y FITOPRICE_API_KEY"
+            exit 1
+          fi
+          docker run --rm \
+            -e WORKFLOW="${{ steps.pick.outputs.id }}" \
+            -e FITOPRICE_API_URL -e FITOPRICE_API_KEY \
+            fitoprice-n8n
