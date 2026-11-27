@@ -1,0 +1,197 @@
+{
+  "id": "FitoPriceRegOfic",
+  "name": "FitoPrice: registro oficial de fitosanitarios",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "nodes": [
+    {
+      "id": "7a1b0000-0001-4c3e-8a10-000000000001",
+      "name": "Cada sábado a las 6:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "El Ministerio actualiza el registro los viernes a partir de las 14:00.",
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                6
+              ],
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7a1b0000-0002-4c3e-8a10-000000000002",
+      "name": "Ejecutar a mano",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7a1b0000-0003-4c3e-8a10-000000000003",
+      "name": "Descargar registro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        100
+      ],
+      "notes": "Misma petición que hace el botón «Listado completo de Productos Autorizados para el Cuaderno de Explotaciones Agrarias» de servicio.mapa.gob.es/regfiweb (Resúmenes). No es una API documentada: si el Ministerio cambia su web, hay que revisarla.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://servicio.mapa.gob.es/regfiweb/Exportaciones/ExportJsonProductosAutorizados",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; FitoPriceBot/1.0)"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tipoExportacion",
+              "value": "ProductosAutorizados"
+            },
+            {
+              "name": "dataDto",
+              "value": "{}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "7a1b0000-0004-4c3e-8a10-000000000004",
+      "name": "Preparar lotes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        100
+      ],
+      "notes": "Decodifica el fichero, se queda con los datos útiles de cada producto (nombres, composición, usos con dosis y plazo de seguridad) y lo parte en lotes de 100.",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// La respuesta del Ministerio es JSON metido en texto varias veces:\n// \"...\" -> { Id, Tipo, Contenido: \"...\", Fecha } -> Contenido -> { Productos: [...] }\nlet value = $input.first().json.data;\nfor (let i = 0; i < 4 && typeof value === 'string'; i++) value = JSON.parse(value);\nconst fecha = String(value.Fecha || '').slice(0, 10);\nconst contenido = typeof value.Contenido === 'string' ? JSON.parse(value.Contenido) : value.Contenido;\nconst productos = contenido?.Productos;\nif (!fecha || !Array.isArray(productos) || productos.length === 0) {\n  throw new Error('El fichero del registro no tiene el formato esperado: puede que el Ministerio haya cambiado su web.');\n}\n\nconst text = (v) => (v == null ? '' : String(v).trim());\nconst num = (v) => (typeof v === 'number' && v > 0 ? v : null);\n\n// Solo los campos que usa FitoPrice; sin los textos largos de condicionamientos\nconst trimmed = productos.map((p) => {\n  const d = p.DATOSPRODUCTO || {};\n  const nombres = [d.Nombre, ...(p.OTROSNOMBRES || []).map((o) => o.Nombre), ...(p.OTRASDENOMINACIONES || []).map((o) => o.Nombre_Origen)]\n    .map(text).filter(Boolean);\n\n  const seen = new Set();\n  const usos = [];\n  for (const u of p.USOS || []) {\n    const uso = {\n      cultivo: text(u.Cultivo),\n      agente: text(u.Agente),\n      dosis_min: num(u.Dosis_Min),\n      dosis_max: num(u.Dosis_Max),\n      unidad: text(u['Unidad Medida dosis']),\n      plazo_seguridad: text(u['Plazo Seguridad']),\n      aplicaciones: text(u.Aplicaciones),\n      intervalo: text(u.IntervaloAplicaciones),\n      sistema: text(u.SistemaCultivo),\n      usuario: text(u.TipoUsuario),\n    };\n    const key = JSON.stringify(uso);\n    if (!seen.has(key)) { seen.add(key); usos.push(uso); }\n  }\n\n  return {\n    num_registro: text(d.Num_Registro),\n    nombre: text(d.Nombre),\n    nombres: [...new Set(nombres)],\n    titular: text(d.Titular),\n    formulado: text(d.Formulado),\n    estado: text(d.Estado),\n    fecha_caducidad: text(d.Fecha_Caducidad),\n    composicion: (p.COMPOSICION || []).map((c) => ({\n      sustancia: text(c['Nombre Sustancia']),\n      concentracion: typeof c.Concentracion === 'number' ? c.Concentracion : null,\n      unidad: text(c.DescripcionNota),\n    })),\n    usos,\n  };\n}).filter((p) => p.num_registro && p.nombre);\n\n// Lotes de 100 productos: la API acepta hasta 25 MB por petición\nconst SIZE = 100;\nconst batches = [];\nfor (let i = 0; i < trimmed.length; i += SIZE) {\n  batches.push({ json: { fecha, last: i + SIZE >= trimmed.length, productos: trimmed.slice(i, i + SIZE) } });\n}\nreturn batches;"
+      }
+    },
+    {
+      "id": "7a1b0000-0005-4c3e-8a10-000000000005",
+      "name": "Guardar en FitoPrice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        100
+      ],
+      "notes": "POST /registry/import, un lote por petición. En el último lote la API borra los productos que ya no están autorizados y enlaza el registro con los productos de las tiendas.",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.FITOPRICE_API_URL }}/registry/import",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.FITOPRICE_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 300
+            }
+          },
+          "timeout": 120000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada sábado a las 6:00": {
+      "main": [
+        [
+          {
+            "node": "Descargar registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar a mano": {
+      "main": [
+        [
+          {
+            "node": "Descargar registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar registro": {
+      "main": [
+        [
+          {
+            "node": "Preparar lotes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar lotes": {
+      "main": [
+        [
+          {
+            "node": "Guardar en FitoPrice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
